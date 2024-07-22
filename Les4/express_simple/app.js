@@ -6,10 +6,15 @@ const customerRoutes = require('./customerRoutes');
 // 1. Set up the server
 const app = express();
 const port = 3000;
+let logCounter = 1;
 
 // PRE-HANDLER MIDDLEWARE
 app.use(express.json());
 
+app.use('/', (req, res, next) => {
+  console.log(`${logCounter++} | Metod: ${req.metod}`);
+  next();
+});
 // Delegate routing for '/api/customers' starting endpoint
 app.use('/api/customers', customerRoutes);
 
