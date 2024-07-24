@@ -6,9 +6,11 @@ const resLogger = require('./middlewares/response-logger');
 // -- DB IMPORTS --
 const mongoose = require('mongoose');
 const Transaction = require('./models/transaction');
+const dotenv = require('dotenv').config();
+const transaction = require('./models/transaction');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 
 // -- MIDDELWARES --
 // Use Template Engine for EJS
@@ -34,29 +36,32 @@ const user = {
 
 // -- USE MONGODB --
 // 1. Create connection string
-const connectionString =
-  //  'mongodb+srv://eligitman:<password>@cluster0.wwn1h0b.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-  'mongodb+srv://tomer79sagi:uW0JaI6kRZfd0Ruw@cluster0.q4m7kxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+const connectionString = process.env.MONGODB_URL;
+//  'mongodb+srv://eligitman:<password>@cluster0.wwn1h0b.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+
 // 2. Connect to MongoDB
-mongoose
-  .connect(connectionString, { useNewUrlParser: true })
-  .then(() => {
-    console.log('MongoDB Connected Successfully!');
-  })
-  .catch((err) => {
-    console.log(`MongoDB Failed to Connect XXX: ${err.message}`);
-  });
+mongoose.connect(connectionString) ||
+  'mongodb+srv://eligitman:Px8YhlZ90b1kI1eU@cluster0.wwn1h0b.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+    .then(() => {
+      console.log('MongoDB Connected Successfully!');
+    })
+    .catch((err) => {
+      console.log(`MongoDB Failed to Connect XXX: ${err.message}`);
+    });
 
 // -- CONTROLLER -- MVC
 app.get('/', (req, res) => {
-  res.render('index', { user: user });
+  //const transaction = await Transaction.find();
+  //const transaction =new Transaction.find();
+  res.render;
+  // res.render('index', { user: user });
 });
 
 app.get('/transfer', (req, res) => {
   res.render('transfer', { user: user });
 });
 
-app.post('/transfer', (req, res) => {
+app.post('/transfer', async (req, res) => {
   const fromAccount = user.accounts.find(
     (account) => account.number === req.body.fromAccount
   );
@@ -75,17 +80,17 @@ app.post('/transfer', (req, res) => {
     fromAccount.balance -= amount;
     toAccount.balance += amount;
 
-    const transactions = new Transaction({
-      amount: amount,
-      fromAccount: fromAccount.number,
-      toAccount: toAccount.number,
-    });
-
     try {
-      transactions.save();
+      const transactions = new Transaction({
+        amount: amount,
+        fromAccount: fromAccount.number,
+        toAccount: toAccount.number,
+      });
+
+      await transactions.save();
       res.redirect('/');
     } catch (err) {
-      concsole.log('Error');
+      concsole.log('Error: ${err.message}');
     }
 
     transactions.push({
@@ -99,8 +104,10 @@ app.post('/transfer', (req, res) => {
   res.redirect('/');
 });
 
-app.get('/transactions', (req, res) => {
-  res.render('transactions', { transactions: transactions });
+app.get('/transactions', async (req, res) => {
+  const transaction = await Transaction.find();
+  res.render('transactions', { transactions: 
+   });
 });
 
 app.listen(port, () => {
