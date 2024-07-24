@@ -1,12 +1,29 @@
+// -- IMPORTS --
 const express = require('express');
 const bodyParser = require('body-parser');
+const resLogger = require('./middlewares/response-logger');
+
+// -- DB IMPORTS --
+const mongoose = require('mongoose');
+const Transaction = require('./models/transaction');
+
 const app = express();
 const port = 3000;
 
+// -- MIDDELWARES --
+// Use Template Engine for EJS
 app.set('view engine', 'ejs');
+
+// Define a public static folder
 app.use(express.static('public'));
+
+// Define a body parser for Forms
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Use ResponseLogger Middleware
+app.use(resLogger);
+
+// -- DATA / DB --
 const user = {
   name: 'John Doe',
   accounts: [
@@ -15,8 +32,22 @@ const user = {
   ],
 };
 
-const transactions = [];
+// -- USE MONGODB --
+// 1. Create connection string
+const connectionString =
+  //  'mongodb+srv://eligitman:<password>@cluster0.wwn1h0b.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+  'mongodb+srv://tomer79sagi:uW0JaI6kRZfd0Ruw@cluster0.q4m7kxp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
+// 2. Connect to MongoDB
+mongoose
+  .connect(connectionString, { useNewUrlParser: true })
+  .then(() => {
+    console.log('MongoDB Connected Successfully!');
+  })
+  .catch((err) => {
+    console.log(`MongoDB Failed to Connect XXX: ${err.message}`);
+  });
 
+// -- CONTROLLER -- MVC
 app.get('/', (req, res) => {
   res.render('index', { user: user });
 });
@@ -43,6 +74,19 @@ app.post('/transfer', (req, res) => {
   ) {
     fromAccount.balance -= amount;
     toAccount.balance += amount;
+
+    const transactions = new Transaction({
+      amount: amount,
+      fromAccount: fromAccount.number,
+      toAccount: toAccount.number,
+    });
+
+    try {
+      transactions.save();
+      res.redirect('/');
+    } catch (err) {
+      concsole.log('Error');
+    }
 
     transactions.push({
       date: new Date().toLocaleString(),
